@@ -27,7 +27,7 @@ const RiskBarChart = ({ riskData }) => {
   return (
     <ResponsiveContainer width="100%" height={400}>
       <BarChart data={chartData} margin={{ top: 30, right: 40, left: 30, bottom: 10 }}>
-        <CartesianGrid strokeDasharray="3 3
+        <CartesianGrid strokeDasharray="0 0
         
         " />
         <XAxis dataKey="level" />

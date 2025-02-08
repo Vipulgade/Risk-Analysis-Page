@@ -2,19 +2,13 @@ import React, { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchRiskData } from "../redux/riskSlice";
 import transactionsData from "../Data/transactions.json"; // Local JSON data
-import { TextField, Button, Typography, Container, Paper, Box } from "@mui/material";
+import { TextField, Button, Typography, Container, Paper } from "@mui/material";
 import { motion } from "framer-motion";
 import RiskMeter from "../components/RiskMeter";
 import RiskDetails from "../components/RiskDetails";
 import TransactionTable from "../components/TransactionDetails";
 import Loader from "../components/Loader";
 import RiskBarChart from "../components/RiskBarChart";
-
-// Motion Animations
-const fadeInVariant = {
-  hidden: { opacity: 0, y: 10 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-};
 
 const RiskAnalysis = () => {
   const [btcAddress, setBtcAddress] = useState("");
@@ -23,20 +17,15 @@ const RiskAnalysis = () => {
   const dispatch = useDispatch();
   const { data, loading, error } = useSelector((state) => state.risk);
 
-  // 🔍 Search Handler: Fetch from API (Redux) or Fallback to JSON
   const handleSearch = () => {
     if (!btcAddress.trim()) return;
-
-    // Fetch data from Redux API
     dispatch(fetchRiskData(btcAddress.trim()));
 
-    // Local JSON Fallback
     const foundData = transactionsData.find(
       (entry) => entry.source_address === btcAddress.trim()
     );
 
     if (foundData) {
-      // Process Transactions for Table
       const extractedTransactions = foundData.level_vise_risk_analysis.flatMap((level) =>
         [...(level.payer_details || []), ...(level.beneficiary_details || [])].flatMap((entity) =>
           (entity.transactions || []).map((tx) => ({
@@ -46,90 +35,76 @@ const RiskAnalysis = () => {
           }))
         )
       );
-
       setLocalRiskData({ ...foundData, transactions: extractedTransactions });
     } else {
       setLocalRiskData(null);
     }
   };
 
-  // Determine which data source to use
   const riskDataToShow = localRiskData || data;
 
   return (
-    <Container maxWidth="md" sx={{ mt: 4 }}>
-      <motion.div variants={fadeInVariant} initial="hidden" animate="visible">
-        <Typography variant="h4" gutterBottom align="center" fontWeight="bold" color="primary">
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 1 }}
+      style={{
+        minHeight: "100vh",
+        background: "linear-gradient(to right,rgb(125, 146, 184),rgb(172, 226, 237) ,rgb(228, 201, 162))",
+        color: "#fff",
+        padding: "20px",
+      }}
+    >
+      <Container maxWidth="md">
+        <Typography variant="h3" gutterBottom align="center">
           Crypto Risk Analysis
         </Typography>
 
-        {/* Search Section */}
-        <Paper sx={{ p: 3, borderRadius: 3, boxShadow: 3, mb: 2 }}>
-          <Box display="flex" gap={2} flexDirection={{ xs: "column", sm: "row" }}>
-            <TextField
-              label="Enter BTC Address"
-              variant="outlined"
-              fullWidth
-              value={btcAddress}
-              onChange={(e) => setBtcAddress(e.target.value)}
-              sx={{ flexGrow: 1 }}
-            />
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleSearch}
-              sx={{ px: 4, height: "56px" }}
-            >
-              Search
-            </Button>
-          </Box>
+        <Paper elevation={3} style={{ padding: "50px", margin:"50px", background: "#edf7f4", borderRadius: "20px" }}>
+          <TextField
+            label="Enter BTC Address"
+            variant="outlined"
+            fullWidth
+            value={btcAddress}
+            onChange={(e) => setBtcAddress(e.target.value)}
+            sx={{ mb: 2, input: { color: "#1d1f1e" }, label: { color: "#f50a31" } }}
+          />
+          <Button variant="contained" color="primary" fullWidth onClick={handleSearch}>
+            Search
+          </Button>
         </Paper>
 
-        {/* Loader */}
         {loading && <Loader />}
 
-        {/* Error Handling */}
         {error && <Typography color="error">{error}</Typography>}
 
-        {/* Display Risk Data */}
         {riskDataToShow && !loading && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.5 }}>
-            {/* Risk Meter & Details */}
             <RiskMeter riskScore={parseInt(riskDataToShow.risk_score)} riskLabel={riskDataToShow.risk} />
             <RiskDetails data={riskDataToShow} />
 
-            {/* Risk Breakdown Chart */}
-            <Paper sx={{ p: 3, mt: 3, borderRadius: 3, boxShadow: 3 }}>
-              <Typography variant="h6" fontWeight="bold" color="primary">
-                Risk Breakdown by Level
-              </Typography>
+            <Paper elevation={3} style={{ padding: "20px", marginTop: "20px", background: "#b6e0c3",borderRadius:"20px" }}>
+              <Typography variant="h6">Risk Breakdown by Level</Typography>
               <RiskBarChart riskData={riskDataToShow.level_vise_risk_analysis} chartType="risk_percentage" />
             </Paper>
 
-            {/* Transaction Table */}
-            <Paper sx={{ p: 3, mt: 3, borderRadius: 3, boxShadow: 3 }}>
-              <Typography variant="h6" fontWeight="bold" color="primary">
-                Transactions
+            {riskDataToShow.transactions?.length > 0 ? (
+              <TransactionTable transactions={riskDataToShow.transactions} />
+            ) : (
+              <Typography variant="subtitle1" align="center" style={{ marginTop: "20px" }}>
+                No transactions found.
               </Typography>
-              {riskDataToShow.transactions && riskDataToShow.transactions.length > 0 ? (
-                <TransactionTable transactions={riskDataToShow.transactions} />
-              ) : (
-                <Typography variant="subtitle1" align="center" sx={{ mt: 2 }}>
-                  No transactions found.
-                </Typography>
-              )}
-            </Paper>
+            )}
           </motion.div>
         )}
 
-        {/* Default Message */}
         {!riskDataToShow && !loading && (
-          <Typography variant="subtitle1" sx={{ mt: 3 }} align="center">
+          <Typography variant="subtitle1" style={{ marginTop: "20px" }} align="center">
             Enter a Bitcoin address to analyze risk.
           </Typography>
         )}
-      </motion.div>
-    </Container>
+      </Container>
+    </motion.div>
   );
 };
 

@@ -14,7 +14,7 @@ const SearchBar = () => {
   };
 
   return (
-    <div style={{ textAlign: "center", margin: "20px 0" }}>
+    <div style={{ textAlign: "center", margin: "20px 0" ,backgroundColor:"#c1e6cc"}}>
       <TextField
         label="Enter BTC Address"
         variant="outlined"
